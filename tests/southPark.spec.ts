@@ -11,3 +11,19 @@ test('Navigates to random episode', async ({ page }) => {
 
 })
 
+test('Should select first episode below "Episodios completos"', async ({ page }) => {
+    const landing = new landingPage(page);
+
+    // Navigate to southpark.lat
+    await landing.navigate();
+
+    await landing.clickOnNavBar();
+
+    // Navigate to the episodes page
+    await landing.navigateToEpisodiosCompletos();
+
+    // Now verify you're on the correct page
+    await expect(page.url()).toContain('/seasons/south-park');
+
+    await landing.selectFirstEpisode();
+})
