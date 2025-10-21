@@ -7,16 +7,15 @@ export class landingPage {
     readonly randomEpisode: Locator
     readonly episodiosDropdownButton: Locator;
     readonly firstEpisode: Locator;
-    readonly firstEpisodeContainer: Locator;
+    readonly emmyCollection: Locator;
 
     constructor(page: Page) {
         this.page = page
         this.completeEpisodes = page.getByTestId('sub-nav-item_0')
         this.randomEpisode = page.getByRole('link', { name: 'Episodio Aleatorio' })
         this.episodiosDropdownButton = page.getByRole('navigation').getByTestId('SubNavigation').getByRole('link', { name: 'Episodios Completos' })
-        this.firstEpisodeContainer = page.locator('li.full-ep').first();
-        this.firstEpisode = page.locator('li.full-ep').first().getByRole('link');
-
+        this.firstEpisode = page.locator('li.full-ep:has-text("T1 • E1") h2').first();
+        this.emmyCollection = page.getByText('Colección: Emmy Episodes', { exact: true });
     }
 
     async navigate() {
@@ -43,12 +42,41 @@ export class landingPage {
     }
 
     async selectFirstEpisode() {
-        // Wait for the page to finish loading
-        // await this.page.waitForLoadState('networkidle');
+        await this.page.locator('li.full-ep').first().waitFor({ state: 'attached' });
 
-        // Ensure the episode list is present
-        await this.firstEpisodeContainer.waitFor({ state: 'visible' });
+        await this.firstEpisode.waitFor({ state: 'visible' });
 
-        await this.firstEpisode.click()
+        await this.firstEpisode.scrollIntoViewIfNeeded();
+        await this.firstEpisode.click();
     }
+
+
+    async clickEmmyCollection() {
+        await this.emmyCollection.waitFor({ state: 'visible', timeout: 8000 });
+        await this.emmyCollection.scrollIntoViewIfNeeded();
+        await this.page.waitForTimeout(300);
+        await this.emmyCollection.click();
+        await this.page.waitForLoadState('networkidle');
+    }
+
+    async expectCollectionPageOpened() {
+        // ✅ Expect exact URL after clicking
+        await expect(this.page).toHaveURL(/\/noticias\/cleowc\/coleccion-emmy-episodes$/, { timeout: 10000 });
+    }
+
+    async clickFirstLinkInCollection() {
+        // Wait for any <a> tag on the page — adjust selector if there's a specific link
+        const firstLink = this.page.locator('main a').first();
+
+        await firstLink.waitFor({ state: 'visible', timeout: 8000 });
+        const href = await firstLink.getAttribute('href');
+        console.log('Clicking first link:', href);
+
+        await firstLink.scrollIntoViewIfNeeded();
+        await firstLink.click();
+
+        // Wait for navigation triggered by the link
+        await this.page.waitForLoadState('networkidle');
+    }
+
 }

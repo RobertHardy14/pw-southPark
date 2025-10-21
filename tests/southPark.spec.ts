@@ -27,3 +27,12 @@ test('Should select first episode below "Episodios completos"', async ({ page })
 
     await landing.selectFirstEpisode();
 })
+
+test('Select Collection: Emmys Episode', async ({ page }) => {
+    const landing = new landingPage(page);
+
+    await landing.navigate();
+    await landing.clickEmmyCollection();
+    await landing.expectCollectionPageOpened()
+    await landing.clickFirstLinkInCollection()
+})
