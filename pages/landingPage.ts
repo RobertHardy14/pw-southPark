@@ -27,7 +27,7 @@ export class landingPage {
     }
 
     async clickOnEpisodes() {
-        await this.randomEpisode.click()
+        await this.randomEpisode.click({ force: true });
     }
 
     async navigateToEpisodiosCompletos() {
@@ -52,11 +52,36 @@ export class landingPage {
 
 
     async clickEmmyCollection() {
-        await this.emmyCollection.waitFor({ state: 'visible', timeout: 8000 });
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        while (attempts < maxAttempts) {
+            // Scroll to the bottom of the page
+            await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+            await this.page.waitForTimeout(500);
+
+            // Check if "Cargar más" button is visible and click it
+            const loadMore = this.page.getByRole('button', { name: 'Cargar más' });
+            if (await loadMore.isVisible()) {
+                await loadMore.click();
+                await this.page.waitForTimeout(1000); // Wait for content to load
+            }
+
+            // Check if the Emmy collection is now visible
+            if (await this.emmyCollection.isVisible()) {
+                break;
+            }
+
+            attempts++;
+        }
+
+        // Once visible, scroll into view and click
         await this.emmyCollection.scrollIntoViewIfNeeded();
         await this.page.waitForTimeout(300);
-        await this.emmyCollection.click();
-        await this.page.waitForLoadState('networkidle');
+        await Promise.all([
+            this.page.waitForNavigation({ waitUntil: 'load' }),
+            this.emmyCollection.click()
+        ]);
     }
 
     async expectCollectionPageOpened() {
@@ -73,10 +98,20 @@ export class landingPage {
         console.log('Clicking first link:', href);
 
         await firstLink.scrollIntoViewIfNeeded();
-        await firstLink.click();
 
-        // Wait for navigation triggered by the link
-        await this.page.waitForLoadState('networkidle');
+        // Handle potential new page/tab opening
+        const [newPage] = await Promise.all([
+            this.page.context().waitForEvent('page'),
+            firstLink.click()
+        ]);
+
+        // Wait for the new page to load
+        await newPage.waitForLoadState('load');
+
+        // Optionally, switch to the new page for further actions
+        // this.page = newPage; // If you need to interact with the new page
+
+        console.log('New page URL:', newPage.url());
     }
 
 }
