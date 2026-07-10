@@ -25,36 +25,31 @@ export class HomePage {
     await this.nav.openCompleteEpisodes();
   }
 
-  async openCollectionCardByName(collectionName: string, maxAttempts = 8): Promise<void> {
+  async openCollectionCardByName(collectionName: string, timeoutMs = 60_000): Promise<void> {
     const targetCard = this.page.getByText(collectionName, { exact: true });
 
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      if (await targetCard.isVisible()) {
-        await targetCard.scrollIntoViewIfNeeded();
-        await targetCard.click();
-        return;
-      }
+    // Collections load via a "Cargar más" pagination button whose batch load time varies
+    // (worse under parallel workers), so retry continuously against a total budget instead
+    // of a fixed number of attempts with short per-attempt timeouts.
+    await expect
+      .poll(
+        async () => {
+          if (await targetCard.isVisible()) {
+            return true;
+          }
 
-      await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+          await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-      if (await this.loadMoreButton.isVisible()) {
-        await this.loadMoreButton.click();
+          if (await this.loadMoreButton.isVisible()) {
+            await this.loadMoreButton.click();
+          }
 
-        // Wait until either target appears or button state changes after loading.
-        await expect
-          .poll(
-            async () => {
-              const targetVisible = await targetCard.isVisible();
-              const loadMoreVisible = await this.loadMoreButton.isVisible();
-              return targetVisible || !loadMoreVisible;
-            },
-            { timeout: 7000 }
-          )
-          .toBeTruthy();
-      }
-    }
+          return false;
+        },
+        { timeout: timeoutMs }
+      )
+      .toBeTruthy();
 
-    await expect(targetCard).toBeVisible({ timeout: 5000 });
     await targetCard.scrollIntoViewIfNeeded();
     await targetCard.click();
   }

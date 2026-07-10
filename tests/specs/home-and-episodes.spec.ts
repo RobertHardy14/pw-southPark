@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/base.fixture';
+import { COLLECTIONS } from '../data/collections.data';
 import { EPISODES } from '../data/episodes.data';
 import { ROUTES } from '../data/routes.data';
 
@@ -61,4 +62,14 @@ test('footer/legal links smoke: privacy and terms pages are reachable', async ({
 
   await legalLink.click();
   await expect(page).toHaveURL(/(terms|term|california|copyright|notice)/i);
+});
+
+test('opens Emmy Collection from home and follows its first article link', async ({ homePage, page }) => {
+  await homePage.gotoHome();
+  await homePage.openCollectionCardByName(COLLECTIONS.emmyEpisodes);
+
+  await expect(page).toHaveURL(ROUTES.emmyCollectionPathRegex, { timeout: 10_000 });
+
+  const targetPage = await homePage.openFirstMainLinkInNewTab();
+  await expect(targetPage).not.toHaveURL(ROUTES.emmyCollectionPathRegex, { timeout: 10_000 });
 });

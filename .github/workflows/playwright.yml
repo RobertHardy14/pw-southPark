@@ -21,7 +21,6 @@ jobs:
         run: npx playwright install --with-deps
       - name: Run Playwright tests
         run: npx playwright test --reporter=html
-        continue-on-error: true
       - name: Upload HTML report
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

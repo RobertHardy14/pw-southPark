@@ -26,8 +26,11 @@ export class TopNavComponent {
   }
 
   async openCompleteEpisodes(): Promise<void> {
+    // The submenu's "Episodios Completos" link renders directly under the top-level trigger
+    // (same href), so its subtree intermittently intercepts pointer events from the trigger.
+    // The trigger itself points at the same destination, so click it directly instead of
+    // going through the submenu.
     await this.expandEpisodesMenu();
-    // Submenu anchor sits under the top-level nav item; pointer hits the parent overlay without force.
-    await this.completeEpisodesLink.click({ force: true });
+    await this.completeEpisodesMenu.click();
   }
 }
