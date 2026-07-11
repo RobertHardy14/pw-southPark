@@ -34,13 +34,6 @@ export default defineConfig({
     /* Capture visual evidence on failure to diagnose environment-specific differences. */
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-
-    /* The site geo-locates by IP and serves the English US site to non-LatAm IPs
-       (confirmed via CI failures), ignoring the .lat domain. Ask for the Spanish/LatAm
-       locale explicitly so the served content matches what these tests expect. */
-    extraHTTPHeaders: {
-      'Accept-Language': 'es-419,es;q=0.9',
-    },
   },
 
   /* Configure projects for major browsers */
